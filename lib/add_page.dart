@@ -8,10 +8,11 @@ import 'dart:io';
 import 'dart:async';
 
 class AddPage extends StatefulWidget {
-  String _imagePath = '';
   final XFile? image;
   final File? file;
-  AddPage({this.image,this.file});
+
+  AddPage({this.image, this.file});
+
   @override
   _AddPageState createState() => _AddPageState();
 }
@@ -24,23 +25,14 @@ class _AddPageState extends State<AddPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return WillPopScope(
+      onWillPop: () {
+        Navigator.of(context).pop(_file);
+        return Future.value(false);
+      },
+      child: Scaffold(
         appBar: AppBar(
           title: Text('画像メモ'),
-          actions: [
-            IconButton(
-              icon: Icon(Icons.add),
-              onPressed: () => {
-                Navigator.of(context).pop(_file)
-              },
-            ),
-            IconButton(
-              icon: Icon(Icons.remove),
-              onPressed: () => {
-                Navigator.of(context).pop()
-                },
-            ),
-          ],
         ),
         body: SingleChildScrollView(
           child: Center(
@@ -56,7 +48,6 @@ class _AddPageState extends State<AddPage> {
                         width: 1.0,
                         height: 30.0,
                       ),
-                      /*
                       TextField(
                         controller: tagscontroller,
                         maxLength: 15,
@@ -97,7 +88,6 @@ class _AddPageState extends State<AddPage> {
                           ),
                         ),
                       ),
-                       */
                     ],
                   ),
                 ),
@@ -105,6 +95,7 @@ class _AddPageState extends State<AddPage> {
             ),
           ),
         ),
+      ),
     );
   }
 

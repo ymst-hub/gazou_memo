@@ -20,11 +20,11 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: '画像リスト',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const MyHomePage(title: 'リスト'),
     );
   }
 }
@@ -52,20 +52,21 @@ class _MyHomePageState extends State<MyHomePage> {
         // the App.build method, and use it to set our appbar title.
         title: Text(widget.title),
       ),
-      body: Center(
-        child: GridView.builder(
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2, //カラム数
-          ),
-          itemCount: _imageList.length, //要素数
-          itemBuilder: (context, index) {
-            //要素を戻り値で返す
-            return Image.file(
-                _imageList[index], fit: BoxFit.cover
-            );
-          },
-          shrinkWrap: true,
+      body: GridView.builder(
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 4, //カラム数
         ),
+        itemCount: _imageList.length, //要素数
+        itemBuilder: (context, index) {
+          //要素を戻り値で返す
+          return Padding(
+            padding: const EdgeInsets.all(2.0),
+            child: Image.file(
+                _imageList[index], fit: BoxFit.cover
+            ),
+          );
+        },
+        shrinkWrap: true,
       ),
       floatingActionButton: FloatingActionButton(
           onPressed: () async {
