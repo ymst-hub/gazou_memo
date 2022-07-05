@@ -1,16 +1,17 @@
-import 'dart:typed_data';
+//https://qiita.com/apricotcomic/items/1ef423088c5f67dd0ae4
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:sqflite/sqflite.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:gazou_memo/memo_model.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'dart:async';
 
+import 'dbhelper.dart';
+
 class AddPage extends StatefulWidget {
   final XFile? image;
   final File? file;
-
   AddPage({this.image, this.file});
 
   @override
@@ -23,11 +24,18 @@ class _AddPageState extends State<AddPage> {
   final tagscontroller = TextEditingController();
   final sentensescontroller = TextEditingController();
 
+
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
-      onWillPop: () {
-        Navigator.of(context).pop(_file);
+      onWillPop: () async {
+
+        Memo memo = new Memo(path:_image!.name,
+            tags:tagscontroller.text,
+            sentense: sentensescontroller.text
+        );
+        await DbHelper.instance.insert(memo);
+        Navigator.of(context).pop();
         return Future.value(false);
       },
       child: Scaffold(
@@ -70,7 +78,7 @@ class _AddPageState extends State<AddPage> {
                         height: 30.0,
                       ),
                       TextField(
-                        controller: tagscontroller,
+                        controller: sentensescontroller,
                         maxLength: 120,
                         keyboardType: TextInputType.multiline,
                         maxLines: null,
