@@ -1,6 +1,4 @@
 import 'dart:typed_data';
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
@@ -9,6 +7,7 @@ import 'dart:io';
 
 import 'add_page.dart';
 import 'dbhelper.dart';
+import 'edit_page.dart';
 import 'memo_model.dart';
 
 void main() async {
@@ -42,25 +41,10 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   List<Memo> MemoList = [];
   String _imagePath = '';
-
-  @override
-  void initState() {
-    super.initState();
-    getMemoList();
-  }
-
-  // initStateで動かす処理。
-  // catsテーブルに登録されている全データを取ってくる
-  Future getMemoList() async {
-    MemoList = await DbHelper.instance.selectAllMemo(); //Memoテーブルを全件読み込む
-    _setImagePath();
-  }
-
-
+  bool isLoading = false;
   _setImagePath() async {
     _imagePath = (await getApplicationDocumentsDirectory()).path;
   }
-
 
   Future<String> _savePhoto(XFile photo) async {
     _setImagePath();
@@ -70,6 +54,24 @@ class _MyHomePageState extends State<MyHomePage> {
     saveFile.writeAsBytesSync(buffer, flush: true, mode: FileMode.write);
     return saveFile.path;
   }
+
+  @override
+  void initState() {
+    super.initState();
+    Future(() async {
+      getMemoList();
+    });
+  }
+
+  // initStateで動かす処理。
+  // MEMOテーブルに登録されている全データを取ってくる
+  Future getMemoList() async {
+      setState(() => isLoading = true);
+      MemoList = await DbHelper.instance.selectAllMemo(); //Memoテーブルを全件読み込む
+      _setImagePath();
+      setState(() => isLoading = false);
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -90,7 +92,20 @@ class _MyHomePageState extends State<MyHomePage> {
           //要素を戻り値で返す
           return Padding(
             padding: const EdgeInsets.all(2.0),
-            child: Image.file(File(_imagePath+'/'+MemoList[index].path), fit: BoxFit.cover),
+            child: GestureDetector(
+                onTap:() async {
+                  await Navigator.push(context, MaterialPageRoute<Null>(
+                      settings: const RouteSettings(),
+                      builder: (BuildContext context){
+                        return EditPage(memo: MemoList[index]);
+                      }
+                  ));
+                  setState((){
+                    getMemoList();
+                  });
+                },
+                child: Image.file(File('$_imagePath/${MemoList[index].path}'), fit: BoxFit.cover)
+            ),
           );
         },
         shrinkWrap: true,
