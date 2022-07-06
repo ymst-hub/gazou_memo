@@ -104,4 +104,26 @@ class DbHelper {
       whereArgs: [id],
     );
   }
+
+  // データをタグから検索する
+  Future<List<Memo>> selectTagsMemo(String tags) async {
+    final db = await instance.database;
+    var memoData = [];
+    //検索欄がnullの場合
+    if(tags == ''){
+      final memoData = await db.query('Memo');          // 条件指定しないでMemoテーブルを読み込む
+      return memoData.map((json) => Memo.fromJson(json)).toList();    // 読み込んだテーブルデータをListにパースしてreturn
+    }else {
+      //nullではない場合
+      memoData = await db.query(
+        'Memo',
+        columns: columns,
+        where: 'tags = ?', // 渡されたtagsをキーにしてMemoテーブルを読み込む
+        whereArgs: [tags],
+      );
+      return memoData.map((json) => Memo.fromJson(json))
+          .toList(); // 読み込んだテーブルデータをListにパースしてreturn
+    }
+  }
+
 }

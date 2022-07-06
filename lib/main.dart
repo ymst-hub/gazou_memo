@@ -42,6 +42,7 @@ class _MyHomePageState extends State<MyHomePage> {
   List<Memo> MemoList = [];
   String _imagePath = '';
   bool isLoading = false;
+
   _setImagePath() async {
     _imagePath = (await getApplicationDocumentsDirectory()).path;
   }
@@ -66,41 +67,61 @@ class _MyHomePageState extends State<MyHomePage> {
   // initStateで動かす処理。
   // MEMOテーブルに登録されている全データを取ってくる
   Future getMemoList() async {
-      setState(() => isLoading = true);
-      MemoList = await DbHelper.instance.selectAllMemo(); //Memoテーブルを全件読み込む
-      _setImagePath();
-      setState(() => isLoading = false);
+    setState(() => isLoading = true);
+    MemoList = await DbHelper.instance.selectAllMemo(); //Memoテーブルを全件読み込む
+    _setImagePath();
+    setState(() => isLoading = false);
   }
-
 
   @override
   Widget build(BuildContext context) {
     final ImagePicker _picker = ImagePicker();
     File? _file;
+    Future getTagData(String tags) async {
+      setState(() => isLoading = true);
+      MemoList = await DbHelper.instance.selectTagsMemo(tags); //Memoテーブルを全件読み込む
+      _setImagePath();
+      setState(() => isLoading = false);
+    }
+
     return Scaffold(
       appBar: AppBar(
         // Here we take the value from the MyHomePage object that was created by
         // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
+        title: TextField(
+          onChanged: (text) {
+            getTagData(text);
+          },
+          decoration: InputDecoration(
+            fillColor: Colors.white,
+            filled: true,
+            hintText: '　検索',
+            contentPadding: EdgeInsets.all(5),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        ),
       ),
       body: GridView.builder(
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 4, //カラム数
+          crossAxisCount: 2, //カラム数
         ),
         itemCount: MemoList.length, //要素数
         itemBuilder: (context, index) {
           //要素を戻り値で返す
           return Padding(
-            padding: const EdgeInsets.all(2.0),
+            padding: const EdgeInsets.all(4.0),
             child: GestureDetector(
-                onTap:() async {
-                  await Navigator.push(context, MaterialPageRoute<Null>(
-                      settings: const RouteSettings(),
-                      builder: (BuildContext context){
-                        return EditPage(memo: MemoList[index]);
-                      }
-                  ));
-                  setState((){
+                onTap: () async {
+                  await Navigator.push(
+                      context,
+                      MaterialPageRoute<Null>(
+                          settings: const RouteSettings(),
+                          builder: (BuildContext context) {
+                            return EditPage(memo: MemoList[index]);
+                          }));
+                  setState(() {
                     getMemoList();
                   });
                 },
@@ -112,7 +133,7 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
       floatingActionButton: FloatingActionButton(
           onPressed: () async {
-            final String path =  (await getApplicationDocumentsDirectory()).path;
+            final String path = (await getApplicationDocumentsDirectory()).path;
             final XFile? _image =
                 await _picker.pickImage(source: ImageSource.gallery);
             _file = File(_image!.path);
@@ -123,7 +144,7 @@ class _MyHomePageState extends State<MyHomePage> {
               }),
             );
             await _savePhoto(_image);
-            setState((){
+            setState(() {
               getMemoList();
             });
           },
