@@ -2,7 +2,7 @@ import 'package:intl/intl.dart';
 
 import 'dbhelper.dart';
 
-// catsテーブルの定義
+// Memoテーブルの定義
 class Memo {
   int? id;
   String path;

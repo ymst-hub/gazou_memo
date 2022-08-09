@@ -10,6 +10,8 @@ import 'dbhelper.dart';
 import 'edit_page.dart';
 import 'memo_model.dart';
 
+//高速化を考える
+
 void main() async {
   runApp(const MyApp());
 }
@@ -39,18 +41,19 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  List<Memo> MemoList = [];
-  String _imagePath = '';
-  bool isLoading = false;
+  List<Memo> MemoList = [];//DBのMemoデータを取得する
+  String _imagePath = '';//保存用のメモを用意
+  bool isLoading = false;//ローディングを出す
 
+  //イメージパスの取得メソッド
   _setImagePath() async {
     _imagePath = (await getApplicationDocumentsDirectory()).path;
   }
 
-  Future<String> _savePhoto(XFile photo) async {
-    _setImagePath();
-    final Uint8List buffer = await photo.readAsBytes();
-    final String savePath = '$_imagePath/${photo.name}';
+  //写真の保存メソッド（xfileからパスを作成する）
+  Future<String> _savePhoto(XFile _image) async {
+    final Uint8List buffer = await _image.readAsBytes();
+    final String savePath = '$_imagePath/${_image.name}';
     final File saveFile = File(savePath);
     saveFile.writeAsBytesSync(buffer, flush: true, mode: FileMode.write);
     return saveFile.path;
@@ -61,6 +64,7 @@ class _MyHomePageState extends State<MyHomePage> {
     super.initState();
     Future(() async {
       getMemoList();
+      _setImagePath();
     });
   }
 
@@ -69,18 +73,19 @@ class _MyHomePageState extends State<MyHomePage> {
   Future getMemoList() async {
     setState(() => isLoading = true);
     MemoList = await DbHelper.instance.selectAllMemo(); //Memoテーブルを全件読み込む
-    _setImagePath();
     setState(() => isLoading = false);
   }
 
   @override
   Widget build(BuildContext context) {
-    final ImagePicker _picker = ImagePicker();
-    File? _file;
-    Future getTagData(String tags) async {
+    final ImagePicker _picker = ImagePicker();//イメージを取得するためのインスタンス
+    File? _file;//表示用のfile型
+
+
+    Future getTagData(String tags) async {//検索バーの処理
       setState(() => isLoading = true);
       MemoList = await DbHelper.instance.selectTagsMemo(tags); //Memoテーブルを全件読み込む
-      _setImagePath();
+      _setImagePath();//イメージパスをセットする（読み込みによって変動するため）
       setState(() => isLoading = false);
     }
 
@@ -88,14 +93,14 @@ class _MyHomePageState extends State<MyHomePage> {
       appBar: AppBar(
         // Here we take the value from the MyHomePage object that was created by
         // the App.build method, and use it to set our appbar title.
-        title: TextField(
-          onChanged: (text) {
+        title: TextField(//検索バーの処理
+          onChanged: (text) {//1文字入力ごとにそれに当たるものがヒットして、imageListに入れられる
             getTagData(text);
           },
           decoration: InputDecoration(
             fillColor: Colors.white,
             filled: true,
-            hintText: '　検索',
+            hintText: '　タイトルを検索',
             contentPadding: EdgeInsets.all(5),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
@@ -103,37 +108,46 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
         ),
       ),
-      body: GridView.builder(
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2, //カラム数
-        ),
-        itemCount: MemoList.length, //要素数
-        itemBuilder: (context, index) {
-          //要素を戻り値で返す
-          return Padding(
+      body: isLoading //「読み込み中」だったら「グルグル」が表示される
+          ? const Center(
+              child: CircularProgressIndicator(), // これが「グルグル」の処理
+            )
+
+          : Padding(
             padding: const EdgeInsets.all(4.0),
-            child: GestureDetector(
-                onTap: () async {
-                  await Navigator.push(
-                      context,
-                      MaterialPageRoute<Null>(
-                          settings: const RouteSettings(),
-                          builder: (BuildContext context) {
-                            return EditPage(memo: MemoList[index]);
-                          }));
-                  setState(() {
-                    getMemoList();
-                  });
+            child: GridView.builder(
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 3, //カラム数
+                ),
+                itemCount: MemoList.length, //要素数
+                itemBuilder: (context, index) {
+                  //要素を戻り値で返す
+                  return Padding(
+                    padding: const EdgeInsets.all(1.0),
+                    child: GestureDetector(
+                      onTap: () async {
+                        await Navigator.push(
+                            context,
+                            MaterialPageRoute<Null>(
+                                settings: const RouteSettings(),
+                                builder: (BuildContext context) {
+                                  return EditPage(memo: MemoList[index]);
+                                }));
+                        setState(() {
+                          getMemoList();
+                        });
+                      },
+                      child: Image.file(
+                          File('$_imagePath/${MemoList[index].path}'),
+                          fit: BoxFit.cover),
+                    ),
+                  );
                 },
-                child: Image.file(File('$_imagePath/${MemoList[index].path}'), fit: BoxFit.cover)
-            ),
-          );
-        },
-        shrinkWrap: true,
-      ),
+                shrinkWrap: true,
+              ),
+          ),
       floatingActionButton: FloatingActionButton(
           onPressed: () async {
-            final String path = (await getApplicationDocumentsDirectory()).path;
             final XFile? _image =
                 await _picker.pickImage(source: ImageSource.gallery);
             _file = File(_image!.path);

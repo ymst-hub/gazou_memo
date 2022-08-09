@@ -12,6 +12,7 @@ import 'dbhelper.dart';
 class AddPage extends StatefulWidget {
   final XFile? image;
   final File? file;
+
   AddPage({this.image, this.file});
 
   @override
@@ -21,19 +22,27 @@ class AddPage extends StatefulWidget {
 class _AddPageState extends State<AddPage> {
   late final XFile? _image = widget.image;
   late final File? _file = widget.file;
+  bool isLoading = false;
   final tagscontroller = TextEditingController();
   final sentensescontroller = TextEditingController();
 
+  @override
+  void initState() {
+    super.initState();
+    Future(() async {
+      setState(() => isLoading = true);
+      setState(() => isLoading = false);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () async {
-
-        Memo memo = new Memo(path:_image!.name,
-            tags:tagscontroller.text,
-            sentense: sentensescontroller.text
-        );
+        Memo memo = new Memo(
+            path: _image!.name,
+            tags: tagscontroller.text,
+            sentense: sentensescontroller.text);
         await DbHelper.instance.insert(memo);
         Navigator.of(context).pop();
         return Future.value(false);
@@ -42,67 +51,72 @@ class _AddPageState extends State<AddPage> {
         appBar: AppBar(
           title: Text('画像メモ'),
         ),
-        body: SingleChildScrollView(
-          child: Center(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
+        body: isLoading //「読み込み中」だったら「グルグル」が表示される
+            ? const Center(
+                child: CircularProgressIndicator(), // これが「グルグル」の処理
+              )
+            : SingleChildScrollView(
+                child: Center(
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Container(child: _displaySelectionImageOrGrayImage()),
-                      SizedBox(
-                        width: 1.0,
-                        height: 30.0,
-                      ),
-                      TextField(
-                        controller: tagscontroller,
-                        maxLength: 15,
-                        decoration: InputDecoration(
-                          hintText: 'タグを入力してください',
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius:
-                                BorderRadius.all(Radius.circular(30.0)),
-                            borderSide:
-                                BorderSide(width: 1, color: Colors.blueAccent),
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius:
-                                BorderRadius.all(Radius.circular(10.0)),
-                          ),
-                        ),
-                      ),
-                      SizedBox(
-                        width: 1.0,
-                        height: 30.0,
-                      ),
-                      TextField(
-                        controller: sentensescontroller,
-                        maxLength: 120,
-                        keyboardType: TextInputType.multiline,
-                        maxLines: null,
-                        decoration: InputDecoration(
-                          hintText: '本文',
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius:
-                                BorderRadius.all(Radius.circular(30.0)),
-                            borderSide:
-                                BorderSide(width: 1, color: Colors.blueAccent),
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius:
-                                BorderRadius.all(Radius.circular(10.0)),
-                          ),
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Column(
+                          children: [
+                            Container(
+                                child: _displaySelectionImageOrGrayImage()),
+                            SizedBox(
+                              width: 1.0,
+                              height: 30.0,
+                            ),
+                            TextField(
+                              controller: tagscontroller,
+                              maxLength: 15,
+                              decoration: InputDecoration(
+                                hintText: 'タイトル',
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(30.0)),
+                                  borderSide: BorderSide(
+                                      width: 1, color: Colors.blueAccent),
+                                ),
+                                border: OutlineInputBorder(
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(10.0)),
+                                ),
+                              ),
+                            ),
+                            SizedBox(
+                              width: 1.0,
+                              height: 30.0,
+                            ),
+                            TextField(
+                              controller: sentensescontroller,
+                              maxLength: 120,
+                              keyboardType: TextInputType.multiline,
+                              maxLines: null,
+                              decoration: InputDecoration(
+                                hintText: '本文',
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(30.0)),
+                                  borderSide: BorderSide(
+                                      width: 1, color: Colors.blueAccent),
+                                ),
+                                border: OutlineInputBorder(
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(10.0)),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
                 ),
-              ],
-            ),
-          ),
-        ),
+              ),
       ),
     );
   }
